@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
+import { ClerkProvider, SignIn, SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import Provider from "@/Provider";
 
 const poppins = Poppins({subsets: ["latin"], weight: ["400", "500", "600", "700"]})
 
@@ -15,12 +17,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${poppins.className} antialiased`}
-      >
-        {children}
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body
+          className={`${poppins.className} antialiased`}
+        >
+          <Provider>
+            {children}
+          </Provider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }
