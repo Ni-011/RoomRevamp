@@ -1,3 +1,4 @@
+'use server'
 import { db } from "@/config/db";
 import { Users } from "@/config/schema";
 import { eq } from "drizzle-orm";
@@ -19,9 +20,9 @@ export async function POST (req: Request) {
             name: user?.fullName,
             email: user?.primaryEmailAddress.emailAddress,
             imageURL: user?.imageUrl,
-        }).returning({Users});
+        }).returning();
 
-        return NextResponse.json({status: "New user added", user: newUser[0].Users});
+        return NextResponse.json({status: "New user added", user: newUser[0]});
     }
 
     return NextResponse.json({result: ExistingUser[0]})
