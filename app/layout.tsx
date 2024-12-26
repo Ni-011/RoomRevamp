@@ -1,10 +1,14 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
-import { ClerkProvider, SignIn, SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
 import Provider from "@/Provider";
+import JotaiProvider from "@/JotaiProvider";
 
-const poppins = Poppins({subsets: ["latin"], weight: ["400", "500", "600", "700"]})
+const poppins = Poppins({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -19,12 +23,10 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body
-          className={`${poppins.className} antialiased`}
-        >
-          <Provider>
-            {children}
-          </Provider>
+        <body className={`${poppins.className} antialiased`}>
+          <JotaiProvider>
+            <Provider>{children}</Provider>
+          </JotaiProvider>
         </body>
       </html>
     </ClerkProvider>
