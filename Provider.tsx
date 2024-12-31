@@ -10,52 +10,52 @@ function Provider({ children }: { children: React.ReactNode }) {
   const setUserDetails = useSetAtom(userDetailsAtom);
 
   useEffect(() => {
-    const verifyuser = async () => {
-      if (!user) {
-        console.log("No user data available");
+    user && verifyuser();
+  }, [user]);
+
+  const verifyuser = async () => {
+    if (!user) {
+      console.log("No user data available");
+      return;
+    }
+
+    try {
+      console.log("Making API call with user data:", {
+        email: user.primaryEmailAddress?.emailAddress,
+        name: user.fullName,
+      });
+
+      const response = await fetch("/api/verifyUser", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("API Response:", data);
+
+      if (data.error) {
+        console.error("API returned error:", data.error);
         return;
       }
 
-      try {
-        console.log("Making API call with user data:", {
-          email: user.primaryEmailAddress?.emailAddress,
-          name: user.fullName,
-        });
+      setUserDetails(data.result);
+    } catch (error: any) {
+      console.error("API Error Details:", {
+        message: error.message,
+        status: error.status,
+        details: error,
+      });
+    }
+  };
 
-        const response = await fetch("api/verifyUser", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ user }),
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log("API Response:", data);
-
-        if (data.error) {
-          console.error("API returned error:", data.error);
-          return;
-        }
-
-        setUserDetails(data.result);
-      } catch (error: any) {
-        console.error("API Error Details:", {
-          message: error.message,
-          status: error.status,
-          details: error,
-        });
-      }
-    };
-
-    verifyuser();
-  }, [user, setUserDetails]);
-
-  return children;
+  return <div>{children}</div>;
 }
 
 export default Provider;
