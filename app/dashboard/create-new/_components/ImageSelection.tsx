@@ -13,28 +13,34 @@ function ImageSelection({ SelectedImage }: any) {
 
   return (
     <div>
-      <label className="text-[#3a5a40]">Upload an Image of your room</label>
-      <div className="mt-5">
+      <label className="text-xl text-[#3a5a40]">
+        Upload an Image of your room
+      </label>
+      <div className="mt-3">
         <label htmlFor="image-upload">
           <div
-            className={`cursor-pointer border rounded-xl border-dotted border-[#3a5a40] bg-[#e9edc9] hover:bg-[#ccd5ae] transition-colors duration-200 flex justify-center ${
-              file ? "p-0" : "p-40"
-            }`}
+            className={`cursor-pointer border rounded-xl border-dotted border-[#3a5a40] 
+            bg-[#e9edc9] hover:bg-[#ccd5ae] transition-colors duration-200 
+            flex justify-center items-center
+            ${file ? "w-[400px] h-[400px] p-0" : "w-[400px] h-[400px] p-0"}`}
           >
             {!file ? (
-              <Image
-                src="/upload-file.png"
-                alt="upload-file"
-                width={70}
-                height={70}
-              />
+              <div className="flex items-center justify-center w-full h-full">
+                <Image
+                  src="/upload-file.png"
+                  alt="upload-file"
+                  width={100}
+                  height={100}
+                  className="opacity-70"
+                />
+              </div>
             ) : (
               <Image
                 src={URL.createObjectURL(file)}
                 alt="uploaded File"
-                width={400}
-                height={400}
-                className="object-cover w-[400px] h-[400px] rounded-xl"
+                width={300}
+                height={300}
+                className="w-full h-full object-cover rounded-xl"
               />
             )}
           </div>
