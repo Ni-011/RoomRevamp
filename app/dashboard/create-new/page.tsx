@@ -6,13 +6,57 @@ import Theme from "./_components/Theme";
 import UserQuery from "./_components/UserQuery";
 import { Button } from "@/components/ui/button";
 
+interface FormData {
+  image?: File[];
+  RoomType?: string;
+  theme?: string;
+  userQuery?: string;
+}
+
 function createNew() {
-  const [formData, setFormData] = useState([]);
+  const [formData, setFormData] = useState<FormData>({});
   const handleInputChange = (value: any, field: string) => {
     setFormData((prevData: any) => ({
       ...prevData,
       [field]: [value],
     }));
+    console.log(formData);
+  };
+
+  const reDesignRoom = async () => {
+    const OGImageURL = await saveOGImage();
+    const result = await fetch("/api/reDesignRoom", {
+      method: "POST",
+      body: JSON.stringify({ ...formData, OGImageURL }),
+    });
+    console.log(result);
+  };
+
+  const saveOGImage = async () => {
+    try {
+      if (!formData.image?.[0]) {
+        throw new Error("No image selected");
+      }
+
+      const formDataUpload = new FormData();
+      formDataUpload.append("file", formData.image?.[0]);
+
+      // upload to cloudinary
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formDataUpload,
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to upload image");
+      }
+
+      const data = await response.json();
+      return data.url;
+    } catch (error) {
+      console.error("Error saving image:", error);
+      throw new Error("Failed to save oringal image");
+    }
   };
 
   return (
@@ -54,6 +98,7 @@ function createNew() {
             hover:translate-y-[2px] active:translate-y-[6px] active:shadow-none
             border-2 border-[#344e3a] hover:border-[#4e7350]
             transform hover:scale-[0.99] active:scale-[0.97] mt-[-15]"
+            onClick={reDesignRoom}
           >
             Generate Design
           </Button>
