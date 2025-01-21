@@ -11,6 +11,7 @@ interface FormData {
   RoomType?: string;
   theme?: string;
   userQuery?: string;
+  OGImageURL?: string;
 }
 
 function createNew() {
@@ -25,37 +26,49 @@ function createNew() {
 
   const reDesignRoom = async () => {
     const OGImageURL = await saveOGImage();
+    console.log("OG Image URL: ", OGImageURL);
     const result = await fetch("/api/reDesignRoom", {
       method: "POST",
-      body: JSON.stringify({ ...formData, OGImageURL }),
+      body: JSON.stringify({
+        imageUrl: OGImageURL,
+        roomType: formData?.RoomType,
+        theme: formData?.theme,
+        userQuery: formData?.userQuery,
+      }),
     });
-    console.log(result);
+    const data = await result.json();
+    console.log("Response Data: ", data);
   };
 
+  //save user's sent image to cloudinary
   const saveOGImage = async () => {
     try {
       if (!formData.image?.[0]) {
         throw new Error("No image selected");
       }
 
-      const formDataUpload = new FormData();
-      formDataUpload.append("file", formData.image?.[0]);
+      const formDataToUpload = new FormData();
+      formDataToUpload.append("file", formData.image[0]);
 
-      // upload to cloudinary
       const response = await fetch("/api/upload", {
         method: "POST",
-        body: formDataUpload,
+        body: formDataToUpload,
       });
 
       if (!response.ok) {
-        throw new Error("Failed to upload image");
+        const errorData = await response.json();
+        console.error("Upload failed with status:", response.status);
+        console.error("Error details:", errorData);
+        throw new Error(
+          `Failed to upload image: ${errorData.error || response.statusText}`
+        );
       }
 
       const data = await response.json();
       return data.url;
     } catch (error) {
-      console.error("Error saving image:", error);
-      throw new Error("Failed to save oringal image");
+      console.error("Error saving original image:", error);
+      throw new Error("Failed to save original image");
     }
   };
 
