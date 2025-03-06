@@ -5,6 +5,9 @@ import RoomtType from "./_components/RoomtType";
 import Theme from "./_components/Theme";
 import UserQuery from "./_components/UserQuery";
 import { Button } from "@/components/ui/button";
+import { useUser } from "@clerk/nextjs";
+import CustomLoader from "./_components/CustomLoader";
+import ImageDialogue from "./_components/ImageDialogue";
 
 interface FormData {
   image?: File[];
@@ -24,9 +27,21 @@ function createNew() {
     console.log(formData);
   };
 
+  const { user } = useUser();
+
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const [OGImageURL, setOGImageURL] = useState<string>();
+
+  const [transformedImageURL, setTransformedImageURL] = useState<string>();
+
+  const [imageDialogue, setImageDialogue] = useState<boolean>(false);
+
   const reDesignRoom = async () => {
+    setLoading(true);
     const OGImageURL = await saveOGImage();
     console.log("OG Image URL: ", OGImageURL);
+    setOGImageURL(OGImageURL);
     const result = await fetch("/api/reDesignRoom", {
       method: "POST",
       body: JSON.stringify({
@@ -34,10 +49,14 @@ function createNew() {
         roomType: formData?.RoomType,
         theme: formData?.theme,
         userQuery: formData?.userQuery,
+        userEMail: user?.primaryEmailAddress?.emailAddress,
       }),
     });
     const data = await result.json();
     console.log("Response Data: ", data);
+    setTransformedImageURL(data.result);
+    setImageDialogue(true);
+    setLoading(false);
   };
 
   //save user's sent image to cloudinary
@@ -65,6 +84,7 @@ function createNew() {
       }
 
       const data = await response.json();
+      console.log("Uploaded image URL:", data.url);
       return data.url;
     } catch (error) {
       console.error("Error saving original image:", error);
@@ -120,6 +140,16 @@ function createNew() {
           </p>
         </div>
       </div>
+      <CustomLoader loading={loading} />
+
+      {transformedImageURL && OGImageURL && (
+        <ImageDialogue
+          imageDialogue={imageDialogue}
+          transformedImageURL={transformedImageURL}
+          OGImageURL={OGImageURL}
+          setImageDialogue={setImageDialogue}
+        />
+      )}
     </div>
   );
 }
