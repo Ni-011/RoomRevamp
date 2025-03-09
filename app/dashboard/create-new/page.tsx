@@ -28,42 +28,174 @@ function createNew() {
   };
 
   const { user } = useUser();
-
   const [loading, setLoading] = useState<boolean>(false);
-
+  const [loadingStatus, setLoadingStatus] = useState<string>("");
   const [OGImageURL, setOGImageURL] = useState<string>();
-
   const [transformedImageURL, setTransformedImageURL] = useState<string>();
-
   const [imageDialogue, setImageDialogue] = useState<boolean>(false);
 
+  // Updated reDesignRoom function that uses the new endpoints
   const reDesignRoom = async () => {
-    setLoading(true);
-    const OGImageURL = await saveOGImage();
-    console.log("OG Image URL: ", OGImageURL);
-    setOGImageURL(OGImageURL);
-    const result = await fetch("/api/reDesignRoom", {
-      method: "POST",
-      body: JSON.stringify({
-        imageUrl: OGImageURL,
-        roomType: formData?.RoomType,
-        theme: formData?.theme,
-        userQuery: formData?.userQuery,
-        userEMail: user?.primaryEmailAddress?.emailAddress,
-      }),
-    });
-    const data = await result.json();
-    console.log("Response Data: ", data);
-    setTransformedImageURL(data.result);
-    setImageDialogue(true);
-    setLoading(false);
+    try {
+      setLoading(true);
+
+      // 1. Upload original image
+      setLoadingStatus("Uploading your image...");
+      const OGImageURL = await saveOGImage();
+      console.log("OG Image URL: ", OGImageURL);
+      setOGImageURL(OGImageURL);
+
+      // 2. Start the prediction
+      setLoadingStatus("Starting design generation...");
+      const roomType = formData?.RoomType?.[0];
+      const theme = formData?.theme?.[0];
+      const userQuery = formData?.userQuery?.[0];
+
+      const startResponse = await fetch("/api/replicate-proxy", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          input: {
+            image: OGImageURL,
+            prompt: `A ${roomType} with a ${theme} style interior ${userQuery}`,
+            guidance_scale: 15,
+            negative_prompt:
+              "lowres, watermark, banner, logo, watermark, contactinfo, text, deformed, blurry, blur, out of focus, out of frame, surreal, extra, ugly, upholstered walls, fabric walls, plush walls, mirror, mirrored, functional, realistic",
+            prompt_strength: 0.8,
+            num_inference_steps: 50,
+          },
+        }),
+      });
+
+      if (!startResponse.ok) {
+        const errorData = await startResponse.json();
+        throw new Error(`Failed to start generation: ${errorData.error}`);
+      }
+
+      const prediction = await startResponse.json();
+      console.log("Prediction started:", prediction);
+
+      // 3. Poll for the result with improved error handling
+      setLoadingStatus("Processing your design...");
+      let attempts = 0;
+      const maxAttempts = 60; // 5 minutes with 5-second intervals
+      let generatedImageUrl = null;
+
+      while (attempts < maxAttempts) {
+        attempts++;
+        setLoadingStatus(
+          `Processing your design... (Attempt ${attempts}/${maxAttempts})`
+        );
+
+        const statusResponse = await fetch(
+          `/api/replicate-status/${prediction.id}`
+        );
+        if (!statusResponse.ok) {
+          const errorData = await statusResponse.json();
+          throw new Error(`Failed to check status: ${errorData.error}`);
+        }
+
+        const result = await statusResponse.json();
+        console.log("Prediction status:", result.status);
+
+        if (result.status === "succeeded") {
+          generatedImageUrl = Array.isArray(result.output)
+            ? result.output[0]
+            : result.output;
+          break;
+        }
+
+        if (result.status === "failed") {
+          throw new Error("Image generation failed");
+        }
+
+        if (result.status === "canceled") {
+          throw new Error("Image generation was canceled");
+        }
+
+        // Wait 5 seconds before next attempt
+        await new Promise((resolve) => setTimeout(resolve, 5000));
+      }
+
+      if (!generatedImageUrl) {
+        throw new Error("Timeout waiting for image generation");
+      }
+
+      // 4. Upload the generated image to Cloudinary
+      setLoadingStatus("Finalizing your design...");
+      const uploadResponse = await fetch("/api/upload", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          imageUrl: generatedImageUrl,
+          isRemoteUrl: true,
+        }),
+      });
+
+      if (!uploadResponse.ok) {
+        const errorData = await uploadResponse.json();
+        throw new Error(`Upload error: ${errorData.error}`);
+      }
+
+      const uploadData = await uploadResponse.json();
+      console.log("Uploaded transformed image:", uploadData);
+
+      // 5. Save to database
+      const saveResponse = await fetch("/api/saveDesign", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          roomType: roomType,
+          theme: theme,
+          userQuery: userQuery,
+          ogImageURL: OGImageURL,
+          transformedImageURL: uploadData.url,
+          userEMail: user?.primaryEmailAddress?.emailAddress,
+        }),
+      });
+
+      if (!saveResponse.ok) {
+        const errorData = await saveResponse.json();
+        throw new Error(`Save error: ${errorData.error}`);
+      }
+
+      const saveData = await saveResponse.json();
+      console.log("Design saved:", saveData);
+
+      setTransformedImageURL(uploadData.url);
+      setImageDialogue(true);
+    } catch (error: any) {
+      console.error("Error:", error);
+      alert(`Error generating design: ${error.message}`);
+    } finally {
+      setLoading(false);
+      setLoadingStatus("");
+    }
   };
 
-  //save user's sent image to cloudinary
+  // Original saveOGImage function
   const saveOGImage = async () => {
     try {
       if (!formData.image?.[0]) {
         throw new Error("No image selected");
+      }
+
+      console.log(
+        "Selected image:",
+        formData.image[0].name,
+        formData.image[0].type,
+        formData.image[0].size
+      );
+
+      // Check if the file is a valid image
+      if (!formData.image[0].type.startsWith("image/")) {
+        throw new Error("Selected file is not an image");
       }
 
       const formDataToUpload = new FormData();
@@ -140,7 +272,7 @@ function createNew() {
           </p>
         </div>
       </div>
-      <CustomLoader loading={loading} />
+      <CustomLoader loading={loading} status={loadingStatus} />
 
       {transformedImageURL && OGImageURL && (
         <ImageDialogue

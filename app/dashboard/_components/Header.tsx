@@ -23,12 +23,14 @@ function Header() {
           <Image src="/money.png" alt="money" width={30} height={30} />
           <p className="text-lg text-[#3a5a40]">{userDetails?.credits ?? 0}</p>
         </div>
-        <Button
-          variant="ghost"
-          className="rounded-full text-sm text-white text-[#588157] hover:bg-[#588157] hover:text-white"
-        >
-          Buy Credits
-        </Button>
+        <Link href="/dashboard/BuyCredits">
+          <Button
+            variant="ghost"
+            className="rounded-full text-sm text-white text-[#588157] hover:bg-[#588157] hover:text-white"
+          >
+            Buy Credits
+          </Button>
+        </Link>
         <UserButton />
       </div>
     </div>
