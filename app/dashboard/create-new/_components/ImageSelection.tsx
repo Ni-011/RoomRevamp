@@ -22,7 +22,7 @@ function ImageSelection({ SelectedImage }: any) {
             className={`cursor-pointer border rounded-xl border-dotted border-[#3a5a40] 
             bg-[#e9edc9] hover:bg-[#ccd5ae] transition-colors duration-200 
             flex justify-center items-center
-            ${file ? "w-[400px] h-[400px] p-0" : "w-[400px] h-[400px] p-0"}`}
+            w-full h-[300px] sm:h-[350px] md:h-[400px] md:w-[400px]`}
           >
             {!file ? (
               <div className="flex items-center justify-center w-full h-full">
@@ -31,7 +31,7 @@ function ImageSelection({ SelectedImage }: any) {
                   alt="upload-file"
                   width={100}
                   height={100}
-                  className="opacity-70"
+                  className="opacity-70 w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24"
                 />
               </div>
             ) : (

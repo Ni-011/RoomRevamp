@@ -225,20 +225,22 @@ function createNew() {
   };
 
   return (
-    <div className="max-w-[1800px] mx-auto px-6 sm:px-8 md:px-12 lg:px-16">
-      <h1 className="text-4xl text-center text-[#3a5a40] mb-10">
+    <div className="max-w-[1800px] mx-auto px-0 sm:px-8 md:px-12 lg:px-16">
+      <h1 className="text-3xl md:text-4xl text-center text-[#3a5a40] mb-10">
         ReImagine your Room with 1 click
       </h1>
 
       <div className="flex flex-col lg:flex-row gap-10">
-        {/* Left side - image upload */}
+        {/* Left side - image upload - constrained size but no layout changes */}
         <div className="flex justify-center items-center lg:block">
-          <ImageSelection
-            SelectedImage={(value: any) => handleInputChange(value, "image")}
-          />
+          <div className="max-w-[280px] sm:max-w-[400px] md:max-w-full">
+            <ImageSelection
+              SelectedImage={(value: any) => handleInputChange(value, "image")}
+            />
+          </div>
         </div>
 
-        {/* Right side - form */}
+        {/* Right side - form - unchanged from original */}
         <div className="flex flex-col gap-7">
           <RoomtType
             selectedRoomType={(value: string) =>

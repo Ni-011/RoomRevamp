@@ -3,10 +3,11 @@ import Replicate from "replicate";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    const predictionId = params.id;
+    // Await the params
+    const predictionId = await context.params.id;
     if (!predictionId) {
       return NextResponse.json(
         { error: "Prediction ID is required" },

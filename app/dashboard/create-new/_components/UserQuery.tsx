@@ -8,11 +8,9 @@ function UserQuery({
 }) {
   return (
     <div>
-      <label className="text-lg text-[#3a5a40]">
-        Enter Additional Details for your Design (optional):
-      </label>
+      <label className="text-lg text-[#3a5a40]">Additional Details:</label>
       <Textarea
-        placeholder="Example: I want a cozy reading corner near the window..."
+        placeholder="The more detailed the prompt, the better the design will be."
         className="mt-4 min-h-[120px] bg-[#fefae0] border-[#3a5a40] 
         text-[#3a5a40] placeholder:text-[#3a5a40]/50
         focus:ring-[#3a5a40] hover:bg-[#ccd5ae] transition-colors duration-200
