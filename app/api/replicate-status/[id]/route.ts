@@ -6,8 +6,8 @@ export async function GET(
   context: { params: { id: string } }
 ) {
   try {
-    // Await the params
-    const predictionId = await context.params.id;
+    // Get the prediction ID directly (no need to await)
+    const predictionId = context.params.id;
     if (!predictionId) {
       return NextResponse.json(
         { error: "Prediction ID is required" },

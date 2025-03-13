@@ -3,7 +3,7 @@ import { useUser } from "@clerk/nextjs";
 import React, { useEffect } from "react";
 import { useSetAtom } from "jotai";
 import { userDetailsAtom } from "@/app/atoms/UserDetailsAtom";
-
+import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 // ** the annoying 404 and 500 errors on api/verifyUser is because of out of sync time with clerk, use ntp to sync time
 function Provider({ children }: { children: React.ReactNode }) {
   const { user } = useUser();
@@ -55,7 +55,24 @@ function Provider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  return <div>{children}</div>;
+  // Using a sandbox client ID for testing
+  // Replace this with your actual PayPal client ID in production
+  const paypalClientId =
+    "AZDxjDScFpQtjWTOUtWKbyN_bDt4OgqaF4eYXlewfBP4-8aqX3PiV8e1GWU6liB2CUXlkA59kJXE7M6R";
+
+  // PayPal script options
+  const paypalScriptOptions = {
+    clientId: paypalClientId,
+    currency: "USD",
+    intent: "capture",
+    components: "buttons",
+  };
+
+  return (
+    <PayPalScriptProvider options={paypalScriptOptions}>
+      <div>{children}</div>
+    </PayPalScriptProvider>
+  );
 }
 
 export default Provider;

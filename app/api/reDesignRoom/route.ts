@@ -35,6 +35,8 @@ export async function POST(req: Request) {
     console.log("Calling Replicate with input:", input);
 
     try {
+      /* 
+      // Commenting out the entire Replicate API call for testing
       const output = await replicate.run(
         "adirik/interior-design:76604baddc85b1b4616e1c6475eca080da339c8875bd4996705440484a6eac38",
         { input }
@@ -112,6 +114,16 @@ export async function POST(req: Request) {
         console.error("Base64 conversion error:", base64Error);
         throw new Error(`Base64 conversion failed: ${base64Error.message}`);
       }
+      */
+
+      // For testing - just log that this route was called and return an error
+      console.log(
+        "TESTING: reDesignRoom route was called, but Replicate API call is commented out"
+      );
+      return NextResponse.json(
+        { error: "Replicate API call is disabled for testing" },
+        { status: 500 }
+      );
     } catch (replicateError: any) {
       console.error("Replicate API error:", replicateError);
       throw new Error(`Replicate API failed: ${replicateError.message}`);

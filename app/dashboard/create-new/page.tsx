@@ -8,6 +8,11 @@ import { Button } from "@/components/ui/button";
 import { useUser } from "@clerk/nextjs";
 import CustomLoader from "./_components/CustomLoader";
 import ImageDialogue from "./_components/ImageDialogue";
+import { useAtom } from "jotai";
+import { userDetailsAtom } from "@/app/atoms/UserDetailsAtom";
+import { db } from "@/config/db";
+import { Users } from "@/config/schema";
+import { eq } from "drizzle-orm";
 
 interface FormData {
   image?: File[];
@@ -15,6 +20,14 @@ interface FormData {
   theme?: string;
   userQuery?: string;
   OGImageURL?: string;
+}
+
+interface UserDetails {
+  id: string;
+  email: string;
+  name: string;
+  imageURL: string;
+  credits: number;
 }
 
 function createNew() {
@@ -33,10 +46,18 @@ function createNew() {
   const [OGImageURL, setOGImageURL] = useState<string>();
   const [transformedImageURL, setTransformedImageURL] = useState<string>();
   const [imageDialogue, setImageDialogue] = useState<boolean>(false);
-
+  const [userDetails, setUserDetails] = useAtom(userDetailsAtom);
   // Updated reDesignRoom function that uses the new endpoints
   const reDesignRoom = async () => {
     try {
+      // Check if user has enough credits
+      if (!userDetails || userDetails.credits < 2) {
+        alert(
+          "You don't have enough credits. Please purchase more credits to continue."
+        );
+        return;
+      }
+
       setLoading(true);
 
       // 1. Upload original image
@@ -168,6 +189,10 @@ function createNew() {
       const saveData = await saveResponse.json();
       console.log("Design saved:", saveData);
 
+      // 6. Update user credits after successful generation
+      await updateCredits();
+      console.log("Credits updated: -2 credits");
+
       setTransformedImageURL(uploadData.url);
       setImageDialogue(true);
     } catch (error: any) {
@@ -221,6 +246,35 @@ function createNew() {
     } catch (error) {
       console.error("Error saving original image:", error);
       throw new Error("Failed to save original image");
+    }
+  };
+
+  const updateCredits = async () => {
+    if (!userDetails || !userDetails.id) {
+      console.error("User details not available");
+      return;
+    }
+
+    const result = await db
+      .update(Users)
+      .set({
+        credits: (userDetails.credits || 0) - 2,
+      })
+      .where(
+        eq(
+          Users.id,
+          typeof userDetails.id === "string"
+            ? parseInt(userDetails.id)
+            : userDetails.id
+        )
+      )
+      .returning({ id: Users.id });
+
+    if (result.length > 0) {
+      setUserDetails({
+        ...userDetails,
+        credits: (userDetails.credits || 0) - 2,
+      });
     }
   };
 
